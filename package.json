@@ -1,0 +1,22 @@
+{
+  "name": "openkart_pwweb_framework",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "tagged_api_tests": "npx playwright test --grep @apiCalls"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^25.9.1"
+  },
+  "dependencies": {
+    "csv-parse": "^6.2.1",
+    "dotenv": "^17.4.2",
+    "xlsx": "^0.18.5"
+  }
+}
