@@ -2,11 +2,22 @@ name: Playwright Tests
 on:
   schedule:
     - cron : '38 19 * *  0' 
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+  # push:
+  #   branches: [ main ]
+  # pull_request:
+  #   branches: [ main ]
   workflow_dispatch: #manual trigger button in github ui
+    inputs:
+      environment:
+        description: 'select environment'
+        required: true
+        default : nonprod
+        type : choice
+        options:
+          - nonprod
+          - preprod
+
+
 jobs:
   test:
     timeout-minutes: 15
@@ -48,7 +59,7 @@ jobs:
       run: npm run tagged_ui_tests
 
       env:
-        ENV : nonprod
+        ENV : ${{ github.event.inputs.environment || 'nonprod'}}
         URL : ${{ secrets.URL}}
         APIBASEURL: ${{ secrets.APIBASEURL}}
         TOKEN : ${{secrets.TOKEN}}
@@ -69,7 +80,7 @@ jobs:
       run: npm run tagged_api_tests
 
       env:
-        ENV : preprod
+        ENV : ${{ github.event.inputs.environment || 'nonprod'}}
         URL : ${{ secrets.URL}}
         APIBASEURL: ${{ secrets.APIBASEURL}}
         TOKEN : ${{secrets.TOKEN}}
