@@ -46,7 +46,7 @@ jobs:
       run: npm run tagged_ui_tests
 
       env:
-        ENV : preprod
+        ENV : nonprod
         URL : ${{ secrets.URL}}
         APIBASEURL: ${{ secrets.APIBASEURL}}
         TOKEN : ${{secrets.TOKEN}}
