@@ -9,7 +9,7 @@ const env = process.env.ENV || 'nonprod';
 console.log(`Running tests on ${env}...`);
 
 // 3. THIRD: Load the specific environment file based on that variable
-dotenv.config({ path: path.resolve(__dirname, `../env/${env}.env`), override: true });
+dotenv.config({ path: path.resolve(__dirname, `../env/${env}.env`), override: !process.env.CI });
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
