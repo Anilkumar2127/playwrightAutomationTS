@@ -43,7 +43,7 @@ export default defineConfig({
      video:'retain-on-failure',
     trace: 'on-first-retry',
     viewport: null,
-    headless:process.env.HEADLESS==='true',
+    headless:process.env.CI?false:true,
     launchOptions:{
       args : ['--start-maximized'],
     }
