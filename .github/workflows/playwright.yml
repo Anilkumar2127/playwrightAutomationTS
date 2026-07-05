@@ -67,7 +67,7 @@ jobs:
         APIBASEURL: ${{ secrets.APIBASEURL}}
         TOKEN : ${{secrets.TOKEN}}
         RETRIES : ${{secrets.RETRIES}}
-        PARALLELMODE : ${{ secrets.PARALLELMODE}} 
+        PARALLELMODE : ${{ vars.PARALLELMODE}} 
 
     - name : Upload ui HTML report
       if: always()    
@@ -90,7 +90,7 @@ jobs:
         APIBASEURL: ${{ secrets.APIBASEURL}}
         TOKEN : ${{secrets.TOKEN}}
         RETRIES : ${{secrets.RETRIES}}
-        PARALLELMODE : ${{ secrets.PARALLELMODE}}
+        PARALLELMODE : ${{ vars.PARALLELMODE}}
 
     - name : Upload api HTML report
       if: always()    
