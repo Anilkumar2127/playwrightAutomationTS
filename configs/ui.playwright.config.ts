@@ -31,7 +31,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: Number(process.env.RETRIES),
   /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 2 : (Number(process.env.PARALLEMODE) || undefined),
+  workers: Number(process.env.PARALLELMODE) || (process.env.CI ? 2 : undefined),
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
     ['html',{outputFolder :path.resolve(__dirname,'../reports/uifinalreport')}]
