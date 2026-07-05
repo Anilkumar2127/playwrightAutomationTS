@@ -39,5 +39,5 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: playwright-html-report
-        path: reports/html-report/
+        path: playwrigh-report/
         retention-days: 30
