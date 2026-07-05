@@ -1,7 +1,7 @@
 name: Playwright Tests
 on:
   schedule:
-    - cron : '30 18 * *  0' 
+    - cron : '38 19 * *  0' 
   push:
     branches: [ main ]
   pull_request:
