@@ -35,7 +35,7 @@ export default defineConfig({
   workers: Number(process.env.PARALLELMODE) || (process.env.CI ? 2 : undefined),
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
     reporter: [
-                ['html' , {outputFolder:path.resolve(__dirname,'../reports/apifinalreport')}]
+                ['html' , {outputFolder:'reports/html-report'}]
               ],
   
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
