@@ -1,0 +1,311 @@
+
+name: e2e CI/CD Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Run up to environment'
+        required: true
+        default: 'nonprod'
+        type: choice
+        options:
+          - NONPROD
+          - PREPROD
+          - LUAT
+
+jobs:
+
+  # ═════════════════════════════════════════════════════
+  # STEP 1: BUILD APP + UNIT TESTS (DEV REPO - MAVEN)
+  # ═════════════════════════════════════════════════════
+  build:
+    name: Build & Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DEV repo
+        uses: actions/checkout@v4
+        with:
+          repository: jglick/simple-maven-project-with-tests
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+
+      - name: Build & Run Unit Tests
+        run: |
+          echo "========================================="
+          echo "  Building App + Running Unit Tests"
+          echo "========================================="
+          mvn clean install -Dmaven.test.failure.ignore=true
+
+      - name: Upload Unit Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-test-results
+          path: target/surefire-reports/
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════
+  # STEP 2: DEPLOY NON PROD + SANITY TESTS
+  # ═════════════════════════════════════════════════════
+  deploy-nonprod:
+    name: Deploy to NON PROD
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to NON PROD
+        run: echo "Deployed to NON PROD ✅"
+
+  sanity-nonprod:
+    name: NON PROD - Sanity Tests
+    needs: deploy-nonprod
+    runs-on: ubuntu-latest
+    environment: PREPROD
+    steps:
+      - name: Checkout NON PROD repo
+        uses: actions/checkout@v4
+        with:
+          repository: Anilkumar2127/playwrightAutomationTS
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Cache Playwright browsers
+        id: pw-cache-dev
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache-dev.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only
+        if: steps.pw-cache-dev.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run Sanity Tests on Non prod
+        run: |
+          echo "========================================="
+          echo "  Running SANITY @smoke on Non prod"
+          echo "========================================="
+          npm run tagged_ui_tests
+        env:
+          ENV: nonprod
+          URL : ${{ secrets.URL}}
+          APIBASEURL: ${{ secrets.APIBASEURL}}
+          TOKEN : ${{secrets.TOKEN}}
+          RETRIES : ${{secrets.RETRIES}}
+          PARALLELMODE : ${{ vars.PARALLELMODE}}
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+
+      - name: Upload non prod HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: non prod-sanity-html-report
+          path: reports/html-report/
+          retention-days: 30
+
+      - name: Upload non prod Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: non prod-sanity-allure-report
+          path: allure-report/
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════
+  # STEP 3: DEPLOY PREPROD + REGRESSION TESTS
+  # ═════════════════════════════════════════════════════
+  deploy-preprod:
+    name: Deploy to preprod
+    needs: sanity-nonprod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to preprod
+        run: echo "Deployed to preprod ✅"
+
+  regression-preprod:
+    name: preprod - Regression Tests
+    needs: deploy-preprod #Identify before job should complete then it starts
+    runs-on: ubuntu-latest
+    environment: NONPROD
+    steps:
+      - name: Checkout nonprod repo
+        uses: actions/checkout@v4
+        with:
+          repository: Anilkumar2127/playwrightAutomationTS
+
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Cache Playwright browsers
+        id: pw-cache-qa
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache-qa.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only
+        if: steps.pw-cache-qa.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run Regression Tests on Preprod
+        run: |
+          echo "========================================="
+          echo "  Running REGRESSION (all tests) on PREPROD"
+          echo "========================================="
+          npm run all_tests
+        env:
+          ENV: preprod
+          URL : ${{ secrets.URL}}
+          APIBASEURL: ${{ secrets.APIBASEURL}}
+          TOKEN : ${{secrets.TOKEN}}
+          RETRIES : ${{secrets.RETRIES}}
+          PARALLELMODE : ${{ vars.PARALLELMODE}}
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+
+      - name: Upload Preprod HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preprod-regression-html-report
+          path: reports/html-report/
+          retention-days: 30
+
+      - name: Upload Preprod Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preprod-regression-allure-report
+          path: allure-report/
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════
+  # STEP 4: DEPLOY STAGE + SANITY TESTS
+  # ═════════════════════════════════════════════════════
+  deploy-luat:
+    name: Deploy to LUAT
+    needs: regression-preprod
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to LUAT
+        run: echo "Deployed to LUAT ✅"
+
+  sanity-luat:
+    name: LUAT - Sanity Tests
+    needs: deploy-luat
+    runs-on: ubuntu-latest
+    environment: LUAT
+    steps:
+      - name: Checkout NON PROD repo
+        uses: actions/checkout@v4
+        with:
+          repository: Anilkumar2127/playwrightAutomationTS
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+
+      - name: Cache Playwright browsers
+        id: pw-cache-stage
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('package-lock.json') }}
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        if: steps.pw-cache-stage.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Playwright OS deps only
+        if: steps.pw-cache-stage.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+
+      - name: Run Sanity Tests on LUAT
+        run: |
+          echo "========================================="
+          echo "  Running SANITY @smoke on LUAT"
+          echo "========================================="
+          npm run tagged_api_tests
+        env:
+          ENV: luat
+          URL : ${{ secrets.URL}}
+          APIBASEURL: ${{ secrets.APIBASEURL}}
+          TOKEN : ${{secrets.TOKEN}}
+          RETRIES : ${{secrets.RETRIES}}
+          PARALLELMODE : ${{ vars.PARALLELMODE}}
+
+      - name: Generate Allure Report
+        if: always()
+        run: |
+          npm install -g allure-commandline
+          allure generate allure-results --clean -o allure-report
+
+      - name: Upload LUAT HTML Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-sanity-html-report
+          path: reports/html-report/
+          retention-days: 30
+
+      - name: Upload LUAT Allure Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stage-sanity-allure-report
+          path: allure-report/
+          retention-days: 30
+
+  # ═════════════════════════════════════════════════════
+  # STEP 5: DEPLOY PROD + SMOKE TESTS
+  # ═════════════════════════════════════════════════════
+  deploy-prod:
+    name: Deploy to PROD
+    needs: sanity-luat
+    runs-on: ubuntu-latest
+    environment: Prod
+    steps:
+      - name: Deploy to PROD
+        run: echo "Deployed to PROD ✅"
+
