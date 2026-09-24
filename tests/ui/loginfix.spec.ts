@@ -1,18 +1,10 @@
 import { test, expect } from '../../src/fixtures/myfixtures';
 
 
-test('Login into application @uitests', async ({ lgPage }) => {
 
-    await lgPage.goToLoginPage();
-    await lgPage.doLogin("problem_user", "secret_sauce");
+test.beforeEach(async({lgPage})=>{
+        await lgPage.launchUrl();        
 });
-
-
-test('Login into application via datasupplier @uitests', async ({ lgPage, datasupplier }) => {
-
-    for (let row of datasupplier) {
-        await lgPage.goToLoginPage();
-        await lgPage.doLogin(row.username, row.password);
-    }
-
-});
+test('Login to Orange HRM @uitests',async({lgPage})=>{
+    await lgPage.doLogin('Admin','admin123');
+})

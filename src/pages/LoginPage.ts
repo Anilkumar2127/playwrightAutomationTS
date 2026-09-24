@@ -3,33 +3,28 @@ import { BasePage } from "./BasePage";
 
 
 
-export class LoginPage extends BasePage {
 
-    // private Locators
-    private readonly userName:Locator;
-    private readonly password:Locator;
-    private readonly loginBtn:Locator;
+export class LoginPage extends BasePage{
 
+    //private variables
+    private readonly userNameField:Locator;
+    private readonly userPassword:Locator;
+    private readonly loginbutton:Locator;
 
     constructor(page:Page){
         super(page);
-        this.userName=page.getByPlaceholder("Username");
-        this.password=page.getByPlaceholder("Password");
-        this.loginBtn=page.getByRole("button",{name:'Login'});
+        this.userNameField=page.getByRole('textbox',{name:'Username'});
+        this.userPassword=page.getByRole('textbox',{name :'Password'});
+        this.loginbutton=page.getByRole('button',{name : 'Login'});
     }
+//public methods
 
-    //page actions methods
-     
-    async goToLoginPage():Promise<void>{
-        await this.page.goto('https://www.saucedemo.com/');
+    public async launchUrl():Promise<void>{
+        await this.page.goto('https://opensource-demo.orangehrmlive.com/web/index.php/auth/login');
     }
-
-
-    async doLogin(username:string,password:string):Promise<void>{
-        await this.userName.isVisible();
-        await this.userName.fill(username);
-        await this.password.fill(password);
-        await this.loginBtn.click();
-
+    public async doLogin(username:string,password:string):Promise<void>{
+        await this.userNameField.fill(username);
+        await this.userPassword.fill(password);
+        await this.loginbutton.click();
     }
 }
