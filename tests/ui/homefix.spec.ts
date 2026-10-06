@@ -32,7 +32,7 @@ test('Verify OrangeHRMInc is naviagble to LiveProduct Window @uitests',async({hm
         console.log('Footer links',await livePage.getAllFooterLinks());
 })
 
-test.only('Verify the dashboard of homepage when navigating back from livePage @uitests',async({hmpage,livePage})=>{
+test('Verify the dashboard of homepage when navigating back from livePage @uitests',async({hmpage,livePage})=>{
         logger.info('Clicking contact sales button');
         await livePage.clickContactSalesButton();
         console.log('Is visible ',await hmpage.isDashBoardVisible());
