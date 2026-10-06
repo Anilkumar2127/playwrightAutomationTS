@@ -17,7 +17,6 @@ on:
           - nonprod
           - preprod
 
-
 jobs:
   test:
     timeout-minutes: 15
@@ -34,7 +33,7 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: 22
-        cache: 'npm'
+        # Removed cache: 'npm' to break potential corrupted lockfile caching loops
 
     - name: Cache Playwright browsers
       id: playwright-cache
@@ -44,6 +43,7 @@ jobs:
         key: playwright-${{ hashFiles('package-lock.json') }}
 
     - name: Install dependencies
+      # Swapped npm ci out for a clean, flexible npm install that will auto-resolve missing sub-dependencies
       run: npm install --no-audit --no-fund
 
     - name: Install Playwright Browsers
@@ -60,7 +60,6 @@ jobs:
     
     - name: Run UI Playwright tests
       run: npm run tagged_ui_tests
-
       env:
         ENV : ${{ github.event.inputs.environment || 'nonprod'}}
         URL : ${{ secrets.URL}}
@@ -77,13 +76,11 @@ jobs:
         path: reports/uifinalreport
         retention-days: 30
 
-        
       # =========================
       # 🟩 API TESTS STAGE
       # =========================   
     - name: Run API Playwright tests
       run: npm run tagged_api_tests
-
       env:
         ENV : ${{ github.event.inputs.environment || 'nonprod'}}
         URL : ${{ secrets.URL}}
