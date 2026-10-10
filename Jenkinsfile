@@ -83,7 +83,7 @@ pipeline {
                     bat 'if exist reporting-labs rmdir /s /q reporting-labs'
                     
                     withCredentials([
-                        usernamePassword(credentialsId: 'dev-credentials',
+                        usernamePassword(credentialsId: 'nonprod',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
                         string(credentialsId: 'dev-base-url', variable: 'URL'),
