@@ -53,8 +53,8 @@ pipeline {
                 dir('qa-tests') {
                     git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
                         branch: 'main'
-                    sh 'npm ci'
-                    sh 'npx playwright install --with-deps chromium'
+                    bat 'npm ci'
+                    bat 'npx playwright install --with-deps chromium'
                 }
             }
         }
@@ -77,7 +77,7 @@ pipeline {
                 echo "  Running SANITY @smoke on DEV"
                 echo "========================================="
                 dir('qa-tests') {
-                    sh 'rm -rf allure-results reports reporting-labs'
+                    bat 'rm -rf allure-results reports reporting-labs'
                     withCredentials([
                         usernamePassword(credentialsId: 'dev-credentials',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
@@ -85,7 +85,7 @@ pipeline {
                         string(credentialsId: 'dev-base-url', variable: 'URL'),
                         string(credentialsId: 'api-base-url', variable: 'APIBASEURL')
                     ]) {
-                        sh '''
+                        bat '''
                             ENV=nonprod \
                             URL=$URL \
                             USERNAME=$USERNAME \
@@ -99,9 +99,9 @@ pipeline {
             }
             post {
                 always {
-                    sh 'mkdir -p reports-dev/html reports-dev/allure reports-dev/reportinglabs'
-                    sh 'cp -r qa-tests/reports/ui-html-report/* reports-dev/html/ || true'
-                    sh 'allure generate qa-tests/allure-results --clean -o reports-dev/allure || true'
+                    bat 'mkdir -p reports-dev/html reports-dev/allure reports-dev/reportinglabs'
+                    bat 'cp -r qa-tests/reports/ui-html-report/* reports-dev/html/ || true'
+                    bat 'allure generate qa-tests/allure-results --clean -o reports-dev/allure || true'
                     publishHTML(target: [
                         reportName: 'DEV Sanity - PW HTML Report',
                         reportDir: 'reports-dev/html',
