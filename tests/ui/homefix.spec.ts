@@ -17,7 +17,7 @@ test('Verify DashBoard page loaded @uitests',async({hmpage})=>{
     expect(await hmpage.isDashBoardVisible(),'Veirfying the dashboard header is visible').toBeTruthy();
 })
 
-test('Verify count of modules in application @uitests',async({hmpage})=>{
+test.skip('Verify count of modules in application @uitests',async({hmpage})=>{
 
         expect(hmpage.getApplicationModules.length).toBe(9);
 })

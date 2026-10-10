@@ -159,7 +159,7 @@ pipeline {
             echo '═══════════════════════════════════════════'
             echo '  PIPELINE: ✅ SUCCESS'
             echo '═══════════════════════════════════════════'
-            mail to: 'qa-alerts@test.local',
+            mail to: 'qa-team@test.local',
                  subject: "SUCCESS: Playwright Suite Passed [Build #${env.BUILD_NUMBER}]",
                  body: "All automated test cases finished successfully. View details in Jenkins."
         }
@@ -167,7 +167,7 @@ pipeline {
             echo '═══════════════════════════════════════════'
             echo '  PIPELINE: ❌ FAILED'
             echo '═══════════════════════════════════════════'
-            mail to: 'qa-alerts@test.local',
+            mail to: 'qa-team@test.local',
                  subject: "FAILURE: Playwright Suite Failed [Build #${env.BUILD_NUMBER}]",
                  body: "Attention: One or more Playwright tests failed. Please review the reports in Jenkins immediately."
         }
