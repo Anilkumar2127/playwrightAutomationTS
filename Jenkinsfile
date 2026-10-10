@@ -77,7 +77,11 @@ pipeline {
                 echo "  Running SANITY @smoke on DEV"
                 echo "========================================="
                 dir('qa-tests') {
-                    bat 'rm -rf allure-results reports reporting-labs'
+                    // FIX: Safe directory cleanup using Windows Commands
+                    bat 'if exist allure-results rmdir /s /q allure-results'
+                    bat 'if exist reports rmdir /s /q reports'
+                    bat 'if exist reporting-labs rmdir /s /q reporting-labs'
+                    
                     withCredentials([
                         usernamePassword(credentialsId: 'dev-credentials',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
@@ -85,23 +89,29 @@ pipeline {
                         string(credentialsId: 'dev-base-url', variable: 'URL'),
                         string(credentialsId: 'api-base-url', variable: 'APIBASEURL')
                     ]) {
+                        // FIX: Windows Batch Environment Syntax
                         bat '''
-                            ENV=nonprod \
-                            URL=$URL \
-                            USERNAME=$USERNAME \
-                            PASSWORD=$PASSWORD \
-                            API_BASE_URL=$APIBASEURL \
-                            API_TOKEN=$TOKEN \
-                            npx playwright test --grep @uitests  --config=configs/ui.playwright.config.ts 
+                            set ENV=nonprod
+                            set URL=%URL%
+                            set USERNAME=%USERNAME%
+                            set PASSWORD=%PASSWORD%
+                            set API_BASE_URL=%APIBASEURL%
+                            set API_TOKEN=%TOKEN%
+                            npx playwright test --grep @uitests --config=configs/ui.playwright.config.ts
                         '''
                     }
                 }
             }
             post {
                 always {
-                    bat 'mkdir -p reports-dev/html reports-dev/allure reports-dev/reportinglabs'
-                    bat 'cp -r qa-tests/reports/ui-html-report/* reports-dev/html/ || true'
-                    bat 'allure generate qa-tests/allure-results --clean -o reports-dev/allure || true'
+                    // FIX: Standard Windows pathing and directory creation
+                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
+                    bat 'if not exist reports-dev\\allure mkdir reports-dev\\allure'
+                    
+                    // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
+                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
+                    bat 'allure generate qa-tests\\allure-results --clean -o reports-dev\\allure || exit 0'
+                    
                     publishHTML(target: [
                         reportName: 'DEV Sanity - PW HTML Report',
                         reportDir: 'reports-dev/html',
