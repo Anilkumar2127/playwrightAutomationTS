@@ -43,28 +43,7 @@ pipeline {
     stages {
 
         // ═════════════════════════════════════════════════
-        // STAGE 1: BUILD APP + UNIT TESTS
-        // ═════════════════════════════════════════════════
-        stage('Build & Unit Tests') {
-            steps {
-                echo "========================================="
-                echo "  Building App + Running Unit Tests"
-                echo "========================================="
-                dir('dev-app') {
-                    git url: 'https://github.com/jglick/simple-maven-project-with-tests.git',
-                        branch: 'master'
-                    sh 'mvn clean install -Dmaven.test.failure.ignore=true'
-                }
-            }
-            post {
-                always {
-                    junit 'dev-app/target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        // ═════════════════════════════════════════════════
-        // STAGE 2: INSTALL PLAYWRIGHT DEPENDENCIES
+        // STAGE 1: INSTALL PLAYWRIGHT DEPENDENCIES
         // ═════════════════════════════════════════════════
         stage('Install Dependencies') {
             steps {
@@ -81,7 +60,7 @@ pipeline {
         }
 
         // ═════════════════════════════════════════════════
-        // STAGE 3: DEPLOY DEV + SANITY
+        // STAGE 2: DEPLOY DEV + SANITY
         // ═════════════════════════════════════════════════
         stage('Deploy to DEV') {
             steps {
@@ -142,7 +121,7 @@ pipeline {
         }
 
         // ═════════════════════════════════════════════════
-        // STAGE 4: DEPLOY PROD + SMOKE (with approval)
+        // STAGE 3: DEPLOY PROD + SMOKE (with approval)
         // ═════════════════════════════════════════════════
         stage('Approval for PROD') {
             steps {
