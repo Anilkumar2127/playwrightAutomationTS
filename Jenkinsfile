@@ -18,7 +18,7 @@ pipeline {
     parameters {
         choice(
             name: 'ENVIRONMENT',
-            choices: ['preprod','nonprod'],
+            choices: ['nonprod'],
             description: 'Select environment to run tests'
         )
         choice(
@@ -86,8 +86,8 @@ pipeline {
                         usernamePassword(credentialsId: 'nonprod',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'dev-base-url', variable: 'URL'),
-                        string(credentialsId: 'api-base-url', variable: 'APIBASEURL')
+                        string(credentialsId: 'prod-url', variable: 'URL'),
+                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
                     ]) {
                         // FIX: Windows Batch Environment Syntax
                         bat '''
