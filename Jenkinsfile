@@ -3,13 +3,10 @@
 // Playwright TypeScript Framework
 // Anil Automation
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 
 pipeline {
     agent any
-
-    triggers {
-        pollSCM('*/10 * * * *')
-    }
 
     tools {
         nodejs 'nodejs'
@@ -19,15 +16,17 @@ pipeline {
     }
 
     parameters {
+
         choice(
             name: 'BROWSER',
-            choices: ['chromium', 'firefox', 'webkit', 'msedge', 'chrome'],
+            choices: ['chromium', 'firefox', 'webkit'],
             description: 'Select browser'
         )
+
     }
 
     options {
-        timeout(time: 45, unit: 'MINUTES') // Extended timeout for all 4 stages
+        timeout(time: 30, unit: 'MINUTES')
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '20'))
         disableConcurrentBuilds()
@@ -44,15 +43,16 @@ pipeline {
                 echo "  Installing Playwright Dependencies"
                 echo "========================================="
                 dir('qa-tests') {
-                    git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS', branch: 'main'
-                    bat 'npm install'
-                    bat "npx playwright install --with-deps ${params.BROWSER}"
+                    git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
+                        branch: 'main'
+                    bat 'npm ci'
+                    bat 'npx playwright install --with-deps chromium'
                 }
             }
         }
 
         // ═════════════════════════════════════════════════
-        // STAGE 2: DEPLOY DEV
+        // STAGE 2: DEPLOY DEV + SANITY
         // ═════════════════════════════════════════════════
         stage('Deploy to DEV') {
             steps {
@@ -63,22 +63,25 @@ pipeline {
             }
         }
 
-        // ═════════════════════════════════════════════════
-        // STAGE 3: DEV-API TESTS
-        // ═════════════════════════════════════════════════
-        stage('DEV-API Tests') {
+        stage('DEV - Sanity Tests') {
             steps {
                 echo "========================================="
-                echo "  Running API Tests on DEV"
+                echo "  Running SANITY @smoke on DEV"
                 echo "========================================="
                 dir('qa-tests') {
+                    // FIX: Safe directory cleanup using Windows Commands
+                    bat 'if exist allure-results rmdir /s /q allure-results'
+                    bat 'if exist reports rmdir /s /q reports'
+                    bat 'if exist reporting-labs rmdir /s /q reporting-labs'
+
                     withCredentials([
-                        usernamePassword(credentialsId: 'nonprod', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
+                        usernamePassword(credentialsId: 'nonprod',
+                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'non-prod-url', variable: 'URL'),
+                        string(credentialsId: 'prod-url', variable: 'URL'),
                         string(credentialsId: 'api-url', variable: 'APIBASEURL')
                     ]) {
-                        // FIXED: Added "|| exit 0" so failed tests don't prematurely abort the pipeline execution before reporting
+                        // FIX: Windows Batch Environment Syntax
                         bat '''
                             set ENV=nonprod
                             set URL=%URL%
@@ -86,75 +89,78 @@ pipeline {
                             set PASSWORD=%PASSWORD%
                             set API_BASE_URL=%APIBASEURL%
                             set API_TOKEN=%TOKEN%
-                            npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts || exit 0
+                            call npm run all_tests
                         '''
                     }
                 }
             }
-        }
+            post {
+                always {
+                    // FIX: Standard Windows pathing and directory creation
+                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
+                    bat 'if not exist reports-dev\\allure mkdir reports-dev\\allure'
 
-        // ═════════════════════════════════════════════════
-        // STAGE 4: DEV - UI SANITY TESTS
-        // ═════════════════════════════════════════════════
-        stage('DEV - UI Sanity Tests') {
-            steps {
-                echo "========================================="
-                echo "  Running UI Sanity Tests (@smoke) on DEV"
-                echo "========================================="
-                dir('qa-tests') {
-                    withCredentials([
-                        usernamePassword(credentialsId: 'nonprod', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
-                        string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'non-prod-url', variable: 'URL'),
-                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
-                    ]) {
-                        // FIXED: Added "|| exit 0" so failed tests don't prematurely abort the pipeline execution before reporting
-                        bat """
-                            set ENV=nonprod
-                            set BROWSER=${params.BROWSER}
-                            set URL=%URL%
-                            set USERNAME=%USERNAME%
-                            set PASSWORD=%PASSWORD%
-                            set API_BASE_URL=%APIBASEURL%
-                            set API_TOKEN=%TOKEN%
-                            npx playwright test --grep @smoke --config=configs/ui.playwright.config.ts || exit 0
-                        """
-                    }
+                    // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
+                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
+                    bat 'allure generate qa-tests\\allure-results --clean -o reports-dev\\allure || exit 0'
+
+                    publishHTML(target: [
+                        reportName: 'DEV Sanity - PW HTML Report',
+                        reportDir: 'reports-dev/html',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                    publishHTML(target: [
+                        reportName: 'DEV Sanity - Allure Report',
+                        reportDir: 'reports-dev/allure',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
                 }
             }
         }
-    } // ◄── Closed stages block cleanly here
 
-    // ═════════════════════════════════════════════════
-    // GLOBAL POST BLOCK (Executes after all stages)
-    // ═════════════════════════════════════════════════
+        // ═════════════════════════════════════════════════
+        // STAGE 3: DEPLOY PROD + SMOKE (with approval)
+        // ═════════════════════════════════════════════════
+        stage('Approval for PROD') {
+            steps {
+                input message: 'Deploy to PROD?',
+                    ok: 'Yes, Deploy!',
+                    submitter: 'admin,anil,qa-teamgit '
+            }
+        }
+
+        stage('Deploy to PROD') {
+            steps {
+                echo "========================================="
+                echo "  Deploying to PROD..."
+                echo "========================================="
+                echo "PROD deployment complete ✅"
+            }
+        }
+    } // <--- Closes 'stages' correctly
+
+    // ═════════════════════════════════════════════════════
+    // POST — CONSOLIDATED EMAIL ACTIONS
+    // ═════════════════════════════════════════════════════
     post {
-        always {
-            echo "========================================="
-            echo " Processing and Publishing Global Test Reports"
-            echo "========================================="
-            
-            // 1. Process API Reports
-            bat 'if not exist reports-dev\\api-html mkdir reports-dev\\api-html'
-            bat 'xcopy /E /Y qa-tests\\playwright-report\\* reports-dev\\api-html\\ || exit 0'
-            publishHTML(target: [
-                reportName: '1. DEV - PW API Report',
-                reportDir: 'reports-dev/api-html',
-                reportFiles: 'index.html',
-                keepAll: true,
-                alwaysLinkToLastBuild: true
-            ])
-
-            // 2. Process UI Reports
-            bat 'if not exist reports-dev\\ui-html mkdir reports-dev\\ui-html'
-            bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\ui-html\\ || exit 0'
-            publishHTML(target: [
-                reportName: '2. DEV - PW UI Report',
-                reportDir: 'reports-dev/ui-html',
-                reportFiles: 'index.html',
-                keepAll: true,
-                alwaysLinkToLastBuild: true
-            ])
+        success {
+            echo '═══════════════════════════════════════════'
+            echo '  PIPELINE: ✅ SUCCESS'
+            echo '═══════════════════════════════════════════'
+            mail to: 'qa-team@test.local',
+                 subject: "SUCCESS: Playwright Suite Passed [Build #${env.BUILD_NUMBER}]",
+                 body: "All automated test cases finished successfully. View details in Jenkins."
+        }
+        failure {
+            echo '═══════════════════════════════════════════'
+            echo '  PIPELINE: ❌ FAILED'
+            echo '═══════════════════════════════════════════'
+            mail to: 'qa-team@test.local',
+                 subject: "FAILURE: Playwright Suite Failed [Build #${env.BUILD_NUMBER}]",
+                 body: "Attention: One or more Playwright tests failed. Please review the reports in Jenkins immediately."
         }
     }
-}
