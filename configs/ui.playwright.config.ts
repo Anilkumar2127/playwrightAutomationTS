@@ -46,7 +46,6 @@ export default defineConfig({
      video:'retain-on-failure',
     trace: 'on-first-retry',
     viewport: null,
-    channel:process.env.BROWSER || 'chrome',
     headless:process.env.CI?true:process.env.HEADLESS==='true',
     launchOptions:{
       args : ['--start-maximized'],

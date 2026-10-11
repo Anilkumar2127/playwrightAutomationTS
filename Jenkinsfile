@@ -92,18 +92,21 @@ pipeline {
                     }
                 }
             }
-            post {
-                always {
-                    bat 'if not exist reports-dev\\api-html mkdir reports-dev\\api-html'
-                    bat 'xcopy /E /Y qa-tests\\playwright-report\\* reports-dev\\api-html\\ || exit 0'
-                    
-                    publishHTML(target: [
-                        reportName: '1. DEV - PW API Report',
-                        reportDir: 'reports-dev/api-html',
-                        reportFiles: 'index.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
-                    ])
+                post {
+            always {
+                // Ensure the target directory exists at the root workspace level
+                bat 'if not exist reports-dev\\api-html mkdir reports-dev\\api-html'
+                
+                // FIX: Added qa-tests\\ to the beginning of the source path
+                bat 'xcopy /E /Y qa-tests\\playwright-report\\* reports-dev\\api-html\\ || exit 0'
+                
+                publishHTML(target: [
+                    reportName: '1. DEV - PW API Report',
+                    reportDir: 'reports-dev/api-html',
+                    reportFiles: 'index.html',
+                    keepAll: true,
+                    alwaysLinkToLastBuild: true
+                     ])
                 }
             }
         }
@@ -138,20 +141,23 @@ pipeline {
                 }
             }
             post {
-                always {
-                    bat 'if not exist reports-dev\\ui-html mkdir reports-dev\\ui-html'
-                    // Usinag your ui configuration output path: reports/ui-html-report
-                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\ui-html\\ || exit 0'
-                    
-                    publishHTML(target: [
-                        reportName: '2. DEV - PW UI Report',
-                        reportDir: 'reports-dev/ui-html',
-                        reportFiles: 'index.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
-                    ])
-                }
+            always {
+                // Ensure the target directory exists at the root workspace level
+                bat 'if not exist reports-dev\\ui-html mkdir reports-dev\\ui-html'
+                
+                // FIX: Removed the duplicate qa-tests directory nesting prefix
+                bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\ui-html\\ || exit 0'
+                
+                publishHTML(target: [
+                    reportName: '2. DEV - PW UI Report',
+                    reportDir: 'reports-dev/ui-html',
+                    reportFiles: 'index.html',
+                    keepAll: true,
+                    alwaysLinkToLastBuild: true
+                ])
             }
+        }
+
         }
     }
 }
