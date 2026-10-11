@@ -17,13 +17,14 @@ export class LivePage extends BasePage{
     }
 
     public async clickContactSalesButton():Promise<void>{
-        logger.info('Clicking the contact sales Button')
+        logger.info('Clicking the Contact Sales button')
         await this.contactSalesButton.click();
     }
 
     public async getAllFooterLinks():Promise<string[]>{
+        logger.info('Scrolling to the live product page footer');
         await this.footerLinks.first().scrollIntoViewIfNeeded();
-        logger.info('Fecting the footer links text');
+        logger.info('Reading live product page footer links');
         return await this.footerLinks.allInnerTexts();
     }
 

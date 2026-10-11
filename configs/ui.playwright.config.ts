@@ -34,7 +34,8 @@ export default defineConfig({
   workers: Number(process.env.PARALLELMODE) || (process.env.CI ? 2 : undefined),
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [
-    ['html',{outputFolder :path.resolve(__dirname, '../reports/ui-html-report')}]
+    ['html',{outputFolder :path.resolve(__dirname, '../reports/ui-html-report')}],
+    ['../src/utilities/testListener.ts']
 ],
   
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
@@ -45,6 +46,7 @@ export default defineConfig({
      video:'retain-on-failure',
     trace: 'on-first-retry',
     viewport: null,
+    channel:process.env.BROWSER || 'chrome',
     headless:process.env.CI?true:process.env.HEADLESS==='true',
     launchOptions:{
       args : ['--start-maximized'],
@@ -55,39 +57,8 @@ export default defineConfig({
   /* Configure projects for major browsers */
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'local',
     },
-
-    // {
-    //   name: 'firefox',
-    //   use: { ...devices['Desktop Firefox'] },
-    // },
-
-    // {
-    //   name: 'webkit',
-    //   use: { ...devices['Desktop Safari'] },
-    // },
-
-    /* Test against mobile viewports. */
-    // {
-    //   name: 'Mobile Chrome',
-    //   use: { ...devices['Pixel 5'] },
-    // },
-    // {
-    //   name: 'Mobile Safari',
-    //   use: { ...devices['iPhone 12'] },
-    // },
-
-    /* Test against branded browsers. */
-    // {
-    //   name: 'Microsoft Edge',
-    //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
-    // },
-    // {
-    //   name: 'Google Chrome',
-    //   use: { ...devices['Desktop Chrome'], channel: 'chrome' },
-    // },
   ],
 
 });

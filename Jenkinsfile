@@ -21,19 +21,9 @@ pipeline {
 
     parameters {
         choice(
-            name: 'ENVIRONMENT',
-            choices: ['nonprod'],
-            description: 'Select environment to run tests'
-        )
-        choice(
             name: 'BROWSER',
-            choices: ['chromium', 'firefox', 'webkit'],
+            choices: ['chromium', 'firefox', 'webkit','msedge','chrome'],
             description: 'Select browser'
-        )
-        choice(
-            name: 'TEST_SUITE',
-            choices: ['apiCalls','uitests'],
-            description: 'Select test suite'
         )
     }
 
@@ -74,8 +64,51 @@ pipeline {
                 echo "DEV deployment complete ✅"
             }
         }
-
-        stage('DEV - Sanity Tests') {
+        stage('DEV-API Tests') {
+            steps {
+                echo "========================================="
+                echo "  Running API Tests on DEV"
+                echo "========================================="
+                dir('qa-tests') {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'nonprod',
+                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
+                        string(credentialsId: 'api-token', variable: 'TOKEN'),
+                        string(credentialsId: 'non-prod-url', variable: 'URL'),
+                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
+                    ]) {
+                        // FIX: Windows Batch Environment Syntax
+                        bat '''
+                            set ENV=nonprod
+                            set URL=%URL%
+                            set USERNAME=%USERNAME%
+                            set PASSWORD=%PASSWORD%
+                            set API_BASE_URL=%APIBASEURL%
+                            set API_TOKEN=%TOKEN%
+                            npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    // FIX: Standard Windows pathing and directory creation
+                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
+                    
+                    // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
+                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-dev\\html\\ || exit 0'
+                    
+                    publishHTML(target: [
+                        reportName: 'dev - PW API Report',
+                        reportDir: 'reports-dev/html',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                }
+            }
+        }
+        stage('DEV -UI Sanity Tests') {
             steps {
                 echo "========================================="
                 echo "  Running SANITY @smoke on DEV"
@@ -90,12 +123,13 @@ pipeline {
                         usernamePassword(credentialsId: 'nonprod',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'prod-url', variable: 'URL'),
+                        string(credentialsId: 'non-prod-url', variable: 'URL'),
                         string(credentialsId: 'api-url', variable: 'APIBASEURL')
                     ]) {
                         // FIX: Windows Batch Environment Syntax
                         bat '''
                             set ENV=nonprod
+                            set BROWSER=%BROWSER%
                             set URL=%URL%
                             set USERNAME=%USERNAME%
                             set PASSWORD=%PASSWORD%
@@ -110,22 +144,14 @@ pipeline {
                 always {
                     // FIX: Standard Windows pathing and directory creation
                     bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
-                    bat 'if not exist reports-dev\\allure mkdir reports-dev\\allure'
-                    
+              
                     // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
                     bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
-                    bat 'allure generate qa-tests\\allure-results --clean -o reports-dev\\allure || exit 0'
+                    
                     
                     publishHTML(target: [
-                        reportName: 'DEV Sanity - PW HTML Report',
+                        reportName: 'DEV sanity-ui-Report',
                         reportDir: 'reports-dev/html',
-                        reportFiles: 'index.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
-                    ])
-                    publishHTML(target: [
-                        reportName: 'DEV Sanity - Allure Report',
-                        reportDir: 'reports-dev/allure',
                         reportFiles: 'index.html',
                         keepAll: true,
                         alwaysLinkToLastBuild: true
@@ -133,6 +159,103 @@ pipeline {
                 }
             }
         }
+        stage('PreProd-API Tests') {
+            steps {
+                echo "========================================="
+                echo "  Running API Tests on DEV"
+                echo "========================================="
+                dir('qa-tests') {
+                    withCredentials([
+                        usernamePassword(credentialsId: 'preprod-env',
+                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
+                        string(credentialsId: 'api-token', variable: 'TOKEN'),
+                        string(credentialsId: 'preprod-url', variable: 'URL'),
+                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
+                    ]) {
+                        // FIX: Windows Batch Environment Syntax
+                        bat '''
+                            set ENV=preprod
+                            set URL=%URL%
+                            set USERNAME=%USERNAME%
+                            set PASSWORD=%PASSWORD%
+                            set API_BASE_URL=%APIBASEURL%
+                            set API_TOKEN=%TOKEN%
+                            npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts
+                        '''
+                    }
+                }
+            }
+             post {
+                always {
+                    // FIX: Standard Windows pathing and directory creation
+                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
+                    
+                    // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
+                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-dev\\html\\ || exit 0'
+                    
+                    publishHTML(target: [
+                        reportName: 'preprod - PW API Report',
+                        reportDir: 'reports-dev/html',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                }
+            }
+        }
+        stage('preprod ui - Sanity Tests') {
+            steps {
+                echo "========================================="
+                echo "  Running SANITY @smoke on DEV"
+                echo "========================================="
+                dir('qa-tests') {
+                    // FIX: Safe directory cleanup using Windows Commands
+                    bat 'if exist allure-results rmdir /s /q allure-results'
+                    bat 'if exist reports rmdir /s /q reports'
+                    bat 'if exist reporting-labs rmdir /s /q reporting-labs'
+                    
+                    withCredentials([
+                        usernamePassword(credentialsId: 'preprod',
+                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
+                        string(credentialsId: 'api-token', variable: 'TOKEN'),
+                        string(credentialsId: 'preprod-url', variable: 'URL'),
+                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
+                    ]) {
+                        // FIX: Windows Batch Environment Syntax
+                        bat '''
+                            set ENV=preprod
+                            set URL=%URL%
+                            set USERNAME=%USERNAME%
+                            set PASSWORD=%PASSWORD%
+                            set API_BASE_URL=%APIBASEURL%
+                            set API_TOKEN=%TOKEN%
+                            npx playwright test --grep @uitests --config=configs/ui.playwright.config.ts
+                        '''
+                    }
+                }
+            }
+            post {
+                always {
+                    // FIX: Standard Windows pathing and directory creation
+                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
+           
+                    
+                    // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
+                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
+                  
+                    
+                    publishHTML(target: [
+                        reportName: 'preprod Sanity - ui-Report',
+                        reportDir: 'reports-dev/html',
+                        reportFiles: 'index.html',
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true
+                    ])
+                
+                }
+            }
+        }
+
 
         // ═════════════════════════════════════════════════
         // STAGE 3: DEPLOY PROD + SMOKE (with approval)
