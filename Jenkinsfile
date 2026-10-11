@@ -47,7 +47,7 @@ pipeline {
                     git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
                         branch: 'main'
                     bat 'npm install'
-                    bat 'npx playwright install --with-deps %BROWSER%'
+                    bat 'npx playwright install --with-deps ${params.BROWSER}'
                 }
             }
         }
