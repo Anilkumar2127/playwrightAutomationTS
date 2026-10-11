@@ -1,17 +1,10 @@
 import { test, expect } from '../../src/fixtures/myfixtures';
 import { AdminPage } from '../../src/pages/AdminPage';
 
-function getRequiredEnvironmentVariable(name: string): string {
-    const value = process.env[name];
-    if (!value) {
-        throw new Error(`Missing required environment variable: ${name}`);
-    }
-    return value;
-}
 
-const username = getRequiredEnvironmentVariable('USERNAME');
-const password = getRequiredEnvironmentVariable('PASSWORD');
 
+const username = process.env.USERNAME || 'admin';
+const password = process.env.PASSWORD || 'admin123';
 test.beforeEach(async ({ lgPage }) => {
     await lgPage.launchUrl();
     await lgPage.doLogin(username, password);
