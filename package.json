@@ -6,6 +6,7 @@
   "scripts": {
     "tagged_api_tests": "npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts",
     "tagged_ui_tests": "npx playwright test --grep @uitests  --config=configs/ui.playwright.config.ts",
+    "smoke_ui_tests": "npx playwright test --grep @smoke  --config=configs/ui.playwright.config.ts",
     "all_tests": "npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts && npx playwright test --grep @uitests  --config=configs/ui.playwright.config.ts"
   },
   "keywords": [],

@@ -12,7 +12,7 @@ test.beforeEach(async ({ lgPage }) => {
     await lgPage.doLogin(username, password);
 });
 
-test('Verify Admin opens the System Users page @uitests', async ({ page }) => {
+test('Verify Admin opens the System Users page @uitests @smoke', async ({ page }) => {
     logger.info('Creating the Admin page object');
     const adminPage = new AdminPage(page);
     logger.info('Opening the System Users page');
@@ -37,7 +37,7 @@ test('Verify the signed-in user can be found in System Users @uitests', async ({
     expect(userRows.some(row => row.includes(username.toLowerCase()))).toBeTruthy();
 });
 
-test('Verify Reset clears the System Users username filter @uitests', async ({ page }) => {
+test('Verify Reset clears the System Users username filter @uitests @smoke', async ({ page }) => {
     logger.info('Creating the Admin page object');
     const adminPage = new AdminPage(page);
     logger.info('Opening the System Users page');

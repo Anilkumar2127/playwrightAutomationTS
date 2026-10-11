@@ -135,7 +135,7 @@ pipeline {
                             set PASSWORD=%PASSWORD%
                             set API_BASE_URL=%APIBASEURL%
                             set API_TOKEN=%TOKEN%
-                            npx playwright test --grep @uitests --config=configs/ui.playwright.config.ts
+                            npx playwright test --grep @smoke  --config=configs/ui.playwright.config.ts
                         '''
                     }
                 }

@@ -56,7 +56,7 @@ test('Verify live product page has footer links @uitests',async({livePage})=>{
         expect(footerLinks.length).toBeGreaterThan(0);
 })
 
-test('Verify OrangeHRMInc is naviagble to LiveProduct Window @uitests',async({hmpage,livePage})=>{
+test('Verify OrangeHRMInc is naviagble to LiveProduct Window @uitests @smoke',async({hmpage,livePage})=>{
         logger.info('Opening the Contact Sales destination from the live product page');
         await livePage.clickContactSalesButton();
         logger.info('Reading footer links from the live product page');
@@ -64,7 +64,7 @@ test('Verify OrangeHRMInc is naviagble to LiveProduct Window @uitests',async({hm
         logger.info(`Retrieved ${footerLinks.length} live product footer links`);
 })
 
-test('Verify the dashboard of homepage when navigating back from livePage @uitests',async({hmpage,livePage})=>{
+test('Verify the dashboard of homepage when navigating back from livePage @uitests @smoke',async({hmpage,livePage})=>{
         logger.info('Opening the Contact Sales destination from the live product page');
         await livePage.clickContactSalesButton();
         logger.info('Verifying the original Dashboard remains visible');
