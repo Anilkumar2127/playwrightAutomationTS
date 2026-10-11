@@ -95,12 +95,13 @@ pipeline {
             }
             post {
                 always {
-                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
-                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-dev\\html\\ || exit 0'
+                    // UNIQUE STORAGE: Dedicated sub-folder for DEV API reports
+                    bat 'if not exist reports-dev\\api-html mkdir reports-dev\\api-html'
+                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-dev\\api-html\\ || exit 0'
                     
                     publishHTML(target: [
-                        reportName: 'dev - PW API Report',
-                        reportDir: 'reports-dev/html',
+                        reportName: '1. DEV - PW API Report',
+                        reportDir: 'reports-dev/api-html',
                         reportFiles: 'index.html',
                         keepAll: true,
                         alwaysLinkToLastBuild: true
@@ -110,56 +111,7 @@ pipeline {
         }
 
         // ═════════════════════════════════════════════════
-        // STAGE 4: DEV - UI SANITY TESTS
-        // ═════════════════════════════════════════════════
-        stage('DEV -UI Sanity Tests') {
-            steps {
-                echo "========================================="
-                echo "  Running SANITY @smoke on DEV"
-                echo "========================================="
-                dir('qa-tests') {
-                    bat 'if exist allure-results rmdir /s /q allure-results'
-                    bat 'if exist reports rmdir /s /q reports'
-                    bat 'if exist reporting-labs rmdir /s /q reporting-labs'
-                    
-                    withCredentials([
-                        usernamePassword(credentialsId: 'nonprod',
-                            usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
-                        string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'non-prod-url', variable: 'URL'),
-                        string(credentialsId: 'api-url', variable: 'APIBASEURL')
-                    ]) {
-                        bat """
-                            set ENV=nonprod
-                            set BROWSER=${params.BROWSER}
-                            set URL=%URL%
-                            set USERNAME=%USERNAME%
-                            set PASSWORD=%PASSWORD%
-                            set API_BASE_URL=%APIBASEURL%
-                            set API_TOKEN=%TOKEN%
-                            npx playwright test --grep @smoke --config=configs/ui.playwright.config.ts --project=${params.BROWSER}
-                        """
-                    }
-                }
-            }
-            post {
-                always {
-                    bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
-                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
-                    
-                    publishHTML(target: [
-                        reportName: 'DEV sanity-ui-Report',
-                        reportDir: 'reports-dev/html',
-                        reportFiles: 'index.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
-                    ])
-                }
-            }
-        }
-
-        // ═════════════════════════════════════════════════
-        // STAGE 5: PREPROD-API TESTS
+        // STAGE 4: PREPROD-API TESTS
         // ═════════════════════════════════════════════════
         stage('PreProd-API Tests') {
             steps {
@@ -188,12 +140,13 @@ pipeline {
             }
             post {
                 always {
-                    bat 'if not exist reports-preprod\\html mkdir reports-preprod\\html'
-                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-preprod\\html\\ || exit 0'
+                    // UNIQUE STORAGE: Dedicated sub-folder for PREPROD API reports
+                    bat 'if not exist reports-preprod\\api-html mkdir reports-preprod\\api-html'
+                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-preprod\\api-html\\ || exit 0'
                     
                     publishHTML(target: [
-                        reportName: 'PreProd - PW API Report',
-                        reportDir: 'reports-preprod/html',
+                        reportName: '3. PREPROD - PW API Report',
+                        reportDir: 'reports-preprod/api-html',
                         reportFiles: 'index.html',
                         keepAll: true,
                         alwaysLinkToLastBuild: true
