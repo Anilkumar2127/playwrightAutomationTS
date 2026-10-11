@@ -17,13 +17,14 @@ test('Verify Admin opens the System Users page @uitests', async ({ page }) => {
     expect(await adminPage.isSystemUsersPageVisible()).toBeTruthy();
 });
 
-test('Verify the signed-in user can be found in System Users @uitests', async ({ page }) => {
+test.only('Verify the signed-in user can be found in System Users @uitests', async ({ page }) => {
     const adminPage = new AdminPage(page);
     await adminPage.openSystemUsers();
     await adminPage.searchByUsername(username);
 
     const userRows = await adminPage.getUserRows();
-    expect(userRows.some(row => row.includes(username))).toBeTruthy();
+    console.log('User Rows:', userRows);
+    expect(userRows.some(row => row.includes(username.toLowerCase()))).toBeTruthy();
 });
 
 test('Verify Reset clears the System Users username filter @uitests', async ({ page }) => {

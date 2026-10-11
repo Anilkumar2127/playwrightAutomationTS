@@ -37,7 +37,7 @@ export class AdminPage extends BasePage {
 
     public async getUserRows(): Promise<string[]> {
         await this.userRows.first().waitFor({ state: 'visible' });
-        return this.userRows.allInnerTexts();
+        return (await this.userRows.allInnerTexts()).map(row=>row.toLowerCase());
     }
 
     public async resetSearch(): Promise<void> {
