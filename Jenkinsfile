@@ -44,7 +44,7 @@ pipeline {
                 echo "  Installing Playwright Dependencies"
                 echo "========================================="
                 dir('qa-tests') {
-                    git url: 'https://github.com',
+                    git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
                         branch: 'main'
                     // UPDATED: Standard npm install and global playwright binary downloads
                     bat 'npm install'
