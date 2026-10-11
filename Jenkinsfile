@@ -27,7 +27,7 @@ pipeline {
     }
 
     options {
-        timeout(time: 30, unit: 'MINUTES')
+        timeout(time: 45, unit: 'MINUTES') // Extended timeout for all 4 stages
         timestamps()
         buildDiscarder(logRotator(numToKeepStr: '20'))
         disableConcurrentBuilds()
@@ -46,7 +46,6 @@ pipeline {
                 dir('qa-tests') {
                     git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
                         branch: 'main'
-                    // UPDATED: Standard npm install and global playwright binary downloads
                     bat 'npm install'
                     bat 'npx playwright install'
                 }
@@ -95,9 +94,8 @@ pipeline {
             }
             post {
                 always {
-                    // UNIQUE STORAGE: Dedicated sub-folder for DEV API reports
                     bat 'if not exist reports-dev\\api-html mkdir reports-dev\\api-html'
-                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-dev\\api-html\\ || exit 0'
+                    bat 'xcopy /E /Y qa-tests\\playwright-report\\* reports-dev\\api-html\\ || exit 0'
                     
                     publishHTML(target: [
                         reportName: '1. DEV - PW API Report',
@@ -111,42 +109,43 @@ pipeline {
         }
 
         // ═════════════════════════════════════════════════
-        // STAGE 4: PREPROD-API TESTS
+        // STAGE 4: DEV - UI SANITY TESTS
         // ═════════════════════════════════════════════════
-        stage('PreProd-API Tests') {
+        stage('DEV - UI Sanity Tests') {
             steps {
                 echo "========================================="
-                echo "  Running API Tests on PREPROD"
+                echo "  Running UI Sanity Tests (@smoke) on DEV"
                 echo "========================================="
                 dir('qa-tests') {
                     withCredentials([
-                        usernamePassword(credentialsId: 'preprod-env',
+                        usernamePassword(credentialsId: 'nonprod',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'preprod-url', variable: 'URL'),
+                        string(credentialsId: 'non-prod-url', variable: 'URL'),
                         string(credentialsId: 'api-url', variable: 'APIBASEURL')
                     ]) {
-                        bat '''
-                            set ENV=preprod
+                        bat """
+                            set ENV=nonprod
+                            set BROWSER=${params.BROWSER}
                             set URL=%URL%
                             set USERNAME=%USERNAME%
                             set PASSWORD=%PASSWORD%
                             set API_BASE_URL=%APIBASEURL%
                             set API_TOKEN=%TOKEN%
-                            npx playwright test --grep @apiCalls --config=configs/api.playwright.config.ts
-                        '''
+                            npx playwright test --grep @smoke --config=configs/ui.playwright.config.ts
+                        """
                     }
                 }
             }
             post {
                 always {
-                    // UNIQUE STORAGE: Dedicated sub-folder for PREPROD API reports
-                    bat 'if not exist reports-preprod\\api-html mkdir reports-preprod\\api-html'
-                    bat 'xcopy /E /Y qa-tests\\reports\\api-html-report\\* reports-preprod\\api-html\\ || exit 0'
+                    bat 'if not exist reports-dev\\ui-html mkdir reports-dev\\ui-html'
+                    // Usinag your ui configuration output path: reports/ui-html-report
+                    bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\ui-html\\ || exit 0'
                     
                     publishHTML(target: [
-                        reportName: '3. PREPROD - PW API Report',
-                        reportDir: 'reports-preprod/api-html',
+                        reportName: '2. DEV - PW UI Report',
+                        reportDir: 'reports-dev/ui-html',
                         reportFiles: 'index.html',
                         keepAll: true,
                         alwaysLinkToLastBuild: true
