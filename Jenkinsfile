@@ -46,7 +46,7 @@ pipeline {
                     git url: 'https://github.com/Anilkumar2127/playwrightAutomationTS',
                         branch: 'main'
                     bat 'npm ci'
-                    bat 'npx playwright install --with-deps chromium'
+                    bat "npx playwright install --with-deps ${params.BROWSER}"
                 }
             }
         }
@@ -89,6 +89,7 @@ pipeline {
                             set PASSWORD=%PASSWORD%
                             set API_BASE_URL=%APIBASEURL%
                             set API_TOKEN=%TOKEN%
+                            set BROWSER=%BROWSER%
                             call npm run all_tests
                         '''
                     }
