@@ -88,7 +88,7 @@ pipeline {
                             set API_BASE_URL=%APIBASEURL%
                             set API_TOKEN=%TOKEN%
                             set BROWSER=%BROWSER%
-                            call npm run all_tests
+                            call npm run all_tests -- --project=%BROWSER%
                         '''
                     }
                 }
