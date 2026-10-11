@@ -17,7 +17,7 @@ test('Verify Admin opens the System Users page @uitests', async ({ page }) => {
     expect(await adminPage.isSystemUsersPageVisible()).toBeTruthy();
 });
 
-test.only('Verify the signed-in user can be found in System Users @uitests', async ({ page }) => {
+test('Verify the signed-in user can be found in System Users @uitests', async ({ page }) => {
     const adminPage = new AdminPage(page);
     await adminPage.openSystemUsers();
     await adminPage.searchByUsername(username);
