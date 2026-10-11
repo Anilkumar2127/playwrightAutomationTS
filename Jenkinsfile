@@ -165,3 +165,4 @@ pipeline {
                  body: "Attention: One or more Playwright tests failed. Please review the reports in Jenkins immediately."
         }
     }
+}
