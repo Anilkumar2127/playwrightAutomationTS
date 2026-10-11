@@ -149,7 +149,7 @@ pipeline {
                 echo "PROD deployment complete ✅"
             }
         }
-    } // <--- Closes 'stages' correctly
+    } 
 
     // ═════════════════════════════════════════════════════
     // POST — CONSOLIDATED EMAIL ACTIONS
