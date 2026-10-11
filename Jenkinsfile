@@ -70,15 +70,13 @@ pipeline {
                 echo "========================================="
                 dir('qa-tests') {
                     // FIX: Safe directory cleanup using Windows Commands
-                    bat 'if exist allure-results rmdir /s /q allure-results'
                     bat 'if exist reports rmdir /s /q reports'
-                    bat 'if exist reporting-labs rmdir /s /q reporting-labs'
 
                     withCredentials([
                         usernamePassword(credentialsId: 'nonprod',
                             usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD'),
                         string(credentialsId: 'api-token', variable: 'TOKEN'),
-                        string(credentialsId: 'prod-url', variable: 'URL'),
+                        string(credentialsId: 'non-prod-url', variable: 'URL'),
                         string(credentialsId: 'api-url', variable: 'APIBASEURL')
                     ]) {
                         // FIX: Windows Batch Environment Syntax
@@ -99,22 +97,13 @@ pipeline {
                 always {
                     // FIX: Standard Windows pathing and directory creation
                     bat 'if not exist reports-dev\\html mkdir reports-dev\\html'
-                    bat 'if not exist reports-dev\\allure mkdir reports-dev\\allure'
 
                     // FIX: Replaced 'cp' with Windows 'xcopy' and fixed '|| true' syntax
                     bat 'xcopy /E /Y qa-tests\\reports\\ui-html-report\\* reports-dev\\html\\ || exit 0'
-                    bat 'allure generate qa-tests\\allure-results --clean -o reports-dev\\allure || exit 0'
 
                     publishHTML(target: [
                         reportName: 'DEV Sanity - PW HTML Report',
                         reportDir: 'reports-dev/html',
-                        reportFiles: 'index.html',
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true
-                    ])
-                    publishHTML(target: [
-                        reportName: 'DEV Sanity - Allure Report',
-                        reportDir: 'reports-dev/allure',
                         reportFiles: 'index.html',
                         keepAll: true,
                         alwaysLinkToLastBuild: true
