@@ -8,6 +8,10 @@
 pipeline {
     agent any
 
+    triggers{
+        pollSCM('*/10 * * * *')
+    }
+
     tools {
         nodejs 'nodejs'
         maven 'maven'
